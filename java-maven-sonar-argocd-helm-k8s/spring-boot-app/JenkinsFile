@@ -23,18 +23,24 @@ pipeline {
     stage('Build and Push Docker Image') {
       environment {
         DOCKER_IMAGE = "asmasmida13/dockertp:${BUILD_NUMBER}" 
-        REGISTRY_CREDENTIALS = credentials('docker-cred')
+        REGISTRY_CREDENTIALS = credentials('dockerhub')
       }
       steps {
         script {
             sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
-            def dockerImage = docker.image("${DOCKER_IMAGE}")
-            docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
-                dockerImage.push()
-            }
+             withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+                    sh "docker login -u asmasmida13 -p $dockerhub"
+                        
+                    }
+                    echo "push to hub"
+                    sh "docker push $DOCKER_IMAGE"
+
+           
         }
       }
     }
+
+
 
 
     stage('Update Deployment File') {
